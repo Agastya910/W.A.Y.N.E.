@@ -53,10 +53,10 @@ RepoPilot has been developed and tested in:
 - **OS**: Windows 11 with WSL2 (Ubuntu 22.04)
 - **CPU**: Intel Core i7 (8 cores) @ 2.5GHz
 - **RAM**: 16GB
-- **GPU**: NVIDIA GTX/RTX (4-8GB VRAM) – Ollama utilizes ~30% during inference
+- **GPU**: NVIDIA GTX 1650 Ti (4 GB VRAM) – Ollama utilizes ~30% during inference
 - **Python**: 3.10 (works with 3.9+)
 - **Ollama Models**: 
-  - `qwen:7b` (7B parameters, ~4GB) for reasoning
+  - `qwen2:7b-instruct-q4_0` (7B parameters, ~4GB) for reasoning
   - `nomic-embed-text` (137M parameters) for embeddings
 - **Shell**: bash (inside WSL2)
 
@@ -81,7 +81,7 @@ RepoPilot has been developed and tested in:
 ollama pull nomic-embed-text
 
 # Required: LLM for reasoning (7B model, ~4GB)
-ollama pull qwen:7b
+ollama pull qwen2:7b-instruct-q4_0
 
 # Optional: Faster alternatives
 ollama pull all-minilm          # Faster embeddings
@@ -93,6 +93,8 @@ ollama pull mistral             # Alternative LLM
 ```bash
 # Linux / WSL
 ollama serve
+## or start as a background service (recommended)
+sudo systemctl start ollama
 
 # macOS (if installed via Homebrew)
 brew services start ollama
@@ -106,7 +108,7 @@ brew services start ollama
 git clone https://github.com/Agastya910/RepoPilot.git
 cd RepoPilot
 
-# Create virtual environment
+# Create virtual environment (optional but recommended)
 python -m venv venv
 source venv/bin/activate        # Windows (WSL/Git Bash): source venv/bin/activate
                                 # Windows (CMD): venv\Scripts\activate
@@ -162,9 +164,6 @@ RepoPilot will:
 | Repository | Files | Chunks | Index Time |
 |-----------|-------|--------|------------|
 | RepoPilot (self) | 20 | 78 | ~10 seconds |
-| Go (golang/go) | 10,360 | 89,031 | ~3-5 minutes |
-| React (facebook/react) | 2,100 | 15,000 | ~1-2 minutes |
-| Linux Kernel | 92,210 | 500,000+ | ~15-20 minutes |
 
 **Subsequent queries**: Instant (embeddings cached on disk)
 
