@@ -1,0 +1,9 @@
+python-dotenv==1.0.0
+ollama==0.1.2
+langchain==0.1.14
+langchain-community==0.0.35
+faiss-cpu==1.7.4
+pydantic==2.5.0
+click==8.1.7
+requests==2.31.0
+

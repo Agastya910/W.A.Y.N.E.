@@ -1,0 +1,69 @@
+import re
+from typing import Literal
+from enum import Enum
+
+class QueryType(Enum):
+    """Types of queries the agent can handle."""
+    METADATA = "metadata"          # File counts, structure → local tools
+    SEARCH = "search"              # Find where X is → retrieval + local
+    REASONING = "reasoning"        # Explain, refactor → LLM + retrieval
+    TOOL_CALL = "tool_call"        # git_clone with URL → executor
+
+
+class QueryRouter:
+    """
+    Routes queries to the appropriate handler.
+    Prevents trivial queries from hitting the LLM.
+    """
+    
+    @staticmethod
+    def classify(query: str) -> QueryType:
+        """Classify query into one of the above types."""
+        query_lower = query.lower()
+        
+        # METADATA queries
+        metadata_keywords = ["how many", "list", "count", "what files", "structure", "hierarchy"]
+        if any(kw in query_lower for kw in metadata_keywords):
+            return QueryType.METADATA
+        
+        # SEARCH queries
+        search_keywords = ["where", "find", "locate", "look for", "search for"]
+        if any(kw in query_lower for kw in search_keywords):
+            return QueryType.SEARCH
+        
+        # TOOL queries - only if there's an actual URL/actionable link
+        tool_keywords = ["clone", "download"]
+        has_url = bool(re.search(r'https?://|github\.com/[\w\-/]+', query_lower))
+        if any(kw in query_lower for kw in tool_keywords) and has_url:
+            return QueryType.TOOL_CALL
+        
+        # CAPABILITY questions → reasoning (not tool_call)
+        capability_keywords = ["can you", "would it", "is it able", "do you support", "can it"]
+        if any(kw in query_lower for kw in capability_keywords):
+            return QueryType.REASONING
+        
+        # Default: REASONING
+        return QueryType.REASONING
+    
+    @staticmethod
+    def needs_llm(query_type: QueryType) -> bool:
+        """Does this query need LLM reasoning?"""
+        return query_type in [QueryType.REASONING, QueryType.SEARCH]
+
+
+if __name__ == "__main__":
+    router = QueryRouter()
+    
+    test_queries = [
+        "How many Python files are in this repo?",
+        "Where is authentication handled?",
+        "Refactor this module to use dependency injection",
+        "Clone https://github.com/user/repo.git",
+        "would it take github repos as input?",
+        "can you correct errors in this codebase?",
+        "is it able to analyze multiple repos?",
+    ]
+    
+    for q in test_queries:
+        query_type = router.classify(q)
+        print(f"'{q}' → {query_type.value}")
