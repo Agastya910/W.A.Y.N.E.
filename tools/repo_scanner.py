@@ -176,9 +176,27 @@ if __name__ == '__main__':
     
     # Create a dummy repo structure for testing
     os.makedirs("test_repo/src", exist_ok=True)
+    os.makedirs("test_repo/src/utils", exist_ok=True)
+    os.makedirs("test_repo/tests", exist_ok=True)
+    os.makedirs("test_repo/docs", exist_ok=True)
+    
     with open("test_repo/src/main.py", "w") as f:
         f.write("print('hello world')")
     
+    with open("test_repo/src/utils/helpers.py", "w") as f:
+        f.write("def helper(): pass")
+    
+    with open("test_repo/src/utils/config.json", "w") as f:
+        f.write('{"setting": "value"}')
+    
+    with open("test_repo/tests/test_main.py", "w") as f:
+        f.write("def test_main(): pass")
+    
+    with open("test_repo/docs/README.md", "w") as f:
+        f.write("# Test Repo")
+    
+    with open("test_repo/setup.py", "w") as f:
+        f.write("from setuptools import setup")
     os.makedirs("test_repo/node_modules", exist_ok=True)  # This should be ignored
     
     repo_tree = scan_repo("test_repo")
