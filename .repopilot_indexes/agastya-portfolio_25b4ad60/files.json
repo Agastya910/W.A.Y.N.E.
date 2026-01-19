@@ -1,0 +1,18 @@
+{
+  "README.md": "Markdown",
+  "components/main-content.tsx": "TypeScript",
+  "package.json": "JSON",
+  "app/globals.css": "CSS",
+  "app/page.tsx": "TypeScript",
+  "tsconfig.json": "JSON",
+  "app/projects/text-gaussian-splatting/page.tsx": "TypeScript",
+  "next.config.ts": "TypeScript",
+  "components/sidebar.tsx": "TypeScript",
+  "tailwind.config.ts": "TypeScript",
+  "app/projects/contrastive-learning/page.tsx": "TypeScript",
+  "next-env.d.ts": "TypeScript",
+  "app/layout.tsx": "TypeScript",
+  "app/projects/offline-android-llm/page.tsx": "TypeScript",
+  "app/projects/deepfake-detection/page.tsx": "TypeScript",
+  "components/project-card.tsx": "TypeScript"
+}

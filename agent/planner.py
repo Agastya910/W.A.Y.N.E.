@@ -135,7 +135,7 @@ User Query: "{user_query}"
 Relevant Code Context (top 5 chunks):
 {context_str if context_str else "[No relevant code found]"}
 
-Based on the query and context, provide a technical analysis. Be specific and reference file names.
+Based on the query and context, answer the user's query, if not clear what the query says, provide a technical analysis. Be specific and reference file names.
 Keep your response clear, concise, and actionable.
 """
         
