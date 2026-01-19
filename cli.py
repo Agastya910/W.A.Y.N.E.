@@ -16,8 +16,12 @@ def print_result(res: dict, max_chars: int = None):
     
     result = res.get("result")
     
+    # Skip printing llm_analysis as it's already streamed during planning
+    if tool == "llm_analysis":
+        return
+    
     # Show full result without truncation for important tools
-    if tool in ["llm_analysis", "report"]:
+    if tool in ["report"]:
         if isinstance(result, str):
             print(result)
         else:

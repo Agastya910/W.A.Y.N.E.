@@ -2,7 +2,7 @@ from typing import List, Dict, Any
 import json
 import os
 
-from tools import repo_scanner, code_search, file_io, diff_writer, git_cloner
+from tools import repo_scanner, code_search, file_io, diff_writer
 from tools.github_helper import clone_github_repo
 from core.indexer import CodeIndexer
 
@@ -20,7 +20,7 @@ class Executor:
             "search_code": code_search.search_code,
             "read_file": file_io.read_file,
             "write_diff": diff_writer.write_diff,
-            "git_clone": git_cloner.clone_repo,
+            
             "github_clone": self._github_clone_tool,
             "github_analyze": self._github_analyze_tool,
             "report": self._report_tool,

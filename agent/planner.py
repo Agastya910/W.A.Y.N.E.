@@ -139,13 +139,18 @@ Based on the query and context, provide a technical analysis. Be specific and re
 Keep your response clear, concise, and actionable.
 """
         
-        response = self.llm_client.generate_text(prompt)
+        print("[PLANNER] Generating analysis...")
+        full_response = ""
+        for chunk in self.llm_client.generate_text_stream(prompt):
+            print(chunk, end="", flush=True)
+            full_response += chunk
+        print()  # New line after streaming
         
         return [{
             "tool_name": "llm_analysis",
             "args": {
                 "query": user_query,
-                "analysis": response
+                "analysis": full_response
             }
         }]
     
