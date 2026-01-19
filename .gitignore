@@ -11,3 +11,4 @@ logs/
 analyzed_repo/
 https:/
 /tmp/
+.repopilot_indexes/
