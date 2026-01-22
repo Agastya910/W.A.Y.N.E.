@@ -7,7 +7,7 @@ __pycache__/
 .vscode/
 analysis_results/
 logs/
-.repopilot_index/
+.repopilot_index
 analyzed_repo/
 https:/
 /tmp/

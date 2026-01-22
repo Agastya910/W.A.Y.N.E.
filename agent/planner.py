@@ -4,7 +4,7 @@ import re
 import os
 
 from llm.local_llm_client import LocalLLMClient
-from core.indexer import CodeIndexer
+from core.indexer_ import CodeIndexer
 from core.query_router import QueryRouter, QueryType
 from tools.github_helper import clone_github_repo, get_repo_url_from_query
 

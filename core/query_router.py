@@ -22,7 +22,7 @@ class QueryRouter:
         query_lower = query.lower()
         
         # METADATA queries
-        metadata_keywords = ["how many", "list", "count", "what files", "structure", "hierarchy"]
+        metadata_keywords = ["how many", "list", "count", "what files", "structure", "hierarchy", "number of files"]
         if any(kw in query_lower for kw in metadata_keywords):
             return QueryType.METADATA
         

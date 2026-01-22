@@ -4,7 +4,7 @@ import os
 
 from tools import repo_scanner, code_search, file_io, diff_writer
 from tools.github_helper import clone_github_repo
-from core.indexer import CodeIndexer
+from core.indexer_ import CodeIndexer
 
 
 class Executor:
