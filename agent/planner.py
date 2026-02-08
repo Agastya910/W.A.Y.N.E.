@@ -30,8 +30,9 @@ class Planner:
         1. Check if user wants to analyze a GitHub repo
         2. Classify query type
         3. If metadata: answer locally
-        4. If search/reasoning: retrieve relevant chunks
-        5. Ask LLM to plan given context
+        4. If edit: generate edit plan
+        5. If search/reasoning: retrieve relevant chunks
+        6. Ask LLM to plan given context
         """
         
         # Check for GitHub repo in query
@@ -45,6 +46,10 @@ class Planner:
         # METADATA: Handle locally
         if query_type == QueryType.METADATA:
             return self._handle_metadata_query(user_query)
+        
+        # EDIT: Generate edit plan
+        if query_type == QueryType.EDIT:
+            return self._handle_edit_query(user_query)
         
         # TOOL: Direct execution
         if query_type == QueryType.TOOL_CALL:
@@ -108,6 +113,50 @@ class Planner:
         return [{
             "tool_name": "report",
             "args": {"message": f"Found {len(files)} files in repository."}
+        }]
+    
+    def _handle_edit_query(self, query: str) -> List[Dict[str, Any]]:
+        """Handle edit queries by finding target file and generating edit plan."""
+        import re
+        
+        # Try to find explicit file reference
+        file_pattern = r'[\w\-_/]+\.(?:py|js|ts|go|rs|java|cpp|c|jsx|tsx)'
+        file_matches = re.findall(file_pattern, query)
+        
+        file_path = None
+        target = None
+        
+        if file_matches:
+            file_path = file_matches[0]
+        else:
+            # Use retrieval to find relevant file
+            results = self.indexer.search(query, k=1)
+            if results:
+                file_path = results[0]['file_path']
+        
+        # Extract function/class target
+        func_match = re.search(r'(?:function|def|method)\s+(\w+)', query.lower())
+        class_match = re.search(r'class\s+(\w+)', query.lower())
+        if func_match:
+            target = func_match.group(1)
+        elif class_match:
+            target = class_match.group(1)
+        
+        if not file_path:
+            return [{
+                "tool_name": "report",
+                "args": {"message": "❌ Could not identify target file. Please specify the file name."}
+            }]
+        
+        print(f"[PLANNER] Edit target: {file_path}")
+        
+        return [{
+            "tool_name": "edit_file",
+            "args": {
+                "file_path": file_path,
+                "instruction": query,
+                "target": target
+            }
         }]
     
     def _retrieve_context(self, query: str) -> List[Dict[str, Any]]:

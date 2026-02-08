@@ -101,10 +101,36 @@ def main():
             # Display results - FULL OUTPUT, NO TRUNCATION
             print("\n" + "="*60)
             for res in results:
-                print_result(res)
+                # Special handling for edit_file results
+                if res.get("tool") == "edit_file":
+                    edit_result = res.get("result", {})
+                    if edit_result.get("success"):
+                        print("\n[EDIT PREVIEW]")
+                        print(f"File: {edit_result.get('file_path')}")
+                        print(f"Summary: {edit_result.get('summary')}")
+                        print("\n--- Diff ---")
+                        print(edit_result.get('diff', '[No diff]'))
+                        print("--- End Diff ---\n")
+                    else:
+                        print(f"❌ Edit failed: {edit_result.get('error', 'Unknown error')}")
+                else:
+                    print_result(res)
             
             print("="*60)
             print(f"Status: {'✅ ACCEPT' if status == 'accept' else '⚠️  RETRY' if status == 'retry' else '❌ ABORT'}\n")
+            
+            # Check for pending edit and ask for confirmation
+            if executor.has_pending_edit():
+                confirm = input("Apply this edit? [y/n]: ").strip().lower()
+                if confirm == 'y':
+                    apply_result = executor._apply_edit_tool(confirm=True)
+                    if apply_result.get("success"):
+                        print(f"\n{apply_result.get('message')}")
+                    else:
+                        print(f"\n❌ {apply_result.get('message')}")
+                else:
+                    executor._apply_edit_tool(confirm=False)
+                    print("\n❌ Edit cancelled.")
             
         except KeyboardInterrupt:
             print("\n\nExiting...")

@@ -5,6 +5,7 @@ import os
 from tools import repo_scanner, code_search, file_io, diff_writer
 from tools.github_helper import clone_github_repo
 from core.indexer_ import CodeIndexer
+from agent.edit_engine import EditEngine
 
 
 class Executor:
@@ -14,6 +15,8 @@ class Executor:
     
     def __init__(self, repo_path: str = "."):
         self.repo_path = repo_path
+        self.edit_engine = EditEngine(repo_path)
+        self._pending_edit = None  # Store pending edit for confirmation
         
         self.tools = {
             "scan_repo": repo_scanner.scan_repo,
@@ -25,6 +28,10 @@ class Executor:
             "github_analyze": self._github_analyze_tool,
             "report": self._report_tool,
             "llm_analysis": self._llm_analysis_tool,
+            
+            # Edit tools
+            "edit_file": self._edit_file_tool,
+            "apply_edit": self._apply_edit_tool,
         }
     
     def _github_clone_tool(self, repo_url: str, dest_path: str, timeout: int = 120) -> Dict[str, Any]:
@@ -73,6 +80,53 @@ class Executor:
     def _llm_analysis_tool(self, query: str, analysis: str) -> str:
         """Store LLM analysis result."""
         return analysis
+    
+    def _edit_file_tool(self, file_path: str, instruction: str, target: str = None) -> Dict[str, Any]:
+        """
+        Generate an edit preview for a file.
+        Returns diff for user review.
+        """
+        result = self.edit_engine.preview_edit(file_path, instruction, target)
+        
+        if result["success"]:
+            # Store for potential apply
+            self._pending_edit = {
+                "file_path": file_path,
+                "modified": result["modified"],
+                "instruction": instruction,
+                "summary": result["summary"]
+            }
+        
+        return result
+    
+    def _apply_edit_tool(self, confirm: bool = True) -> Dict[str, Any]:
+        """
+        Apply the pending edit after user confirmation.
+        """
+        if not self._pending_edit:
+            return {"success": False, "message": "No pending edit to apply"}
+        
+        if not confirm:
+            self._pending_edit = None
+            return {"success": False, "message": "Edit cancelled by user"}
+        
+        result = self.edit_engine.apply_edit(
+            self._pending_edit["file_path"],
+            self._pending_edit["modified"],
+            self._pending_edit["instruction"],
+            self._pending_edit["summary"]
+        )
+        
+        self._pending_edit = None
+        return result
+    
+    def has_pending_edit(self) -> bool:
+        """Check if there's a pending edit awaiting confirmation."""
+        return self._pending_edit is not None
+    
+    def get_pending_edit_info(self) -> Dict:
+        """Get info about pending edit."""
+        return self._pending_edit
     
     def execute_plan(self, plan: List[Dict[str, Any]]) -> List[Any]:
         """Execute a plan of tool calls."""

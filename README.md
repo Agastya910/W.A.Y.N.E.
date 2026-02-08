@@ -42,6 +42,9 @@ RepoPilot > are you able to correct errors in this codebase?
 
 RepoPilot > Analyze https://github.com/golang/go
 → Clones, indexes 10k+ files, ready for questions
+
+RepoPilot > edit the temperature in local_llm_client.py to 0.5
+→ Shows diff preview, asks for confirmation, applies safely
 ```
 
 ---
@@ -184,17 +187,16 @@ See `OPTIMIZATION_GUIDE.md` for GPU tuning and faster model alternatives.
 - ✅ **Multi-language support** (Python, JavaScript, Java, C/C++, Go, Rust, TypeScript, etc.)
 - ✅ **Cross-platform** (Linux, macOS, Windows via WSL2)
 - ✅ **Fully offline** (no cloud APIs, no data leakage)
+- ✅ **Safe code editing** with diff preview and user confirmation
 
 ### 🚧 Limitations & Roadmap
 
 **Current limitations:**
-- **Read-only mode**: RepoPilot analyzes and explains code but doesn't edit files (intentional for safety)
 - **CLI only**: No GUI yet (web UI coming soon)
 - **Public repos only**: Private GitHub repos require SSH keys (planned)
 - **No streaming**: Responses arrive all at once (streaming mode in progress)
 
 **Coming next:**
-- ✏️ **Safe code editing** with diff preview and approval
 - 💬 **Streaming responses** for better UX
 - 🌐 **Web UI** with React frontend
 - 🐳 **Docker support** for one-command deployment
@@ -350,7 +352,7 @@ export REPOPILOT_LLM=mistral
 A: The first run builds the embedding index (one-time cost). Subsequent queries load from cache and are instant.
 
 **Q: Can it edit my code?**  
-A: Not yet. RepoPilot is currently read-only for safety. Code editing with diff preview is planned.
+A: Yes! Use commands like `edit the function X in file.py`. RepoPilot will show a diff preview and ask for confirmation before applying changes. All edits are logged to `agent_memory/task.md`.
 
 ---
 

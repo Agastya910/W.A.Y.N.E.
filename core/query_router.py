@@ -8,6 +8,7 @@ class QueryType(Enum):
     SEARCH = "search"              # Find where X is → retrieval + local
     REASONING = "reasoning"        # Explain, refactor → LLM + retrieval
     TOOL_CALL = "tool_call"        # git_clone with URL → executor
+    EDIT = "edit"                  # Edit/modify/fix code → edit engine
 
 
 class QueryRouter:
@@ -20,6 +21,11 @@ class QueryRouter:
     def classify(query: str) -> QueryType:
         """Classify query into one of the above types."""
         query_lower = query.lower()
+        
+        # EDIT queries - check first (highest priority for editing)
+        edit_keywords = ["edit", "change", "modify", "update", "fix", "refactor", "add to", "remove from", "delete from", "replace", "rename"]
+        if any(kw in query_lower for kw in edit_keywords):
+            return QueryType.EDIT
         
         # METADATA queries
         metadata_keywords = ["how many", "list", "count", "what files", "structure", "hierarchy", "number of files"]
