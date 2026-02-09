@@ -169,17 +169,27 @@ Return the complete modified file:"""
         if not file_path:
             return {"success": False, "error": "No file specified or found"}
         
-        original, modified, summary = self.generate_edit(file_path, instruction, target)
+        # Resolve file path - try direct path first, then search by name
+        resolved_path = file_path
+        if not self.retriever.get_file(file_path):
+            # Try to find by basename
+            found = self.retriever.find_file_by_name(os.path.basename(file_path))
+            if found:
+                resolved_path = found
+            else:
+                return {"success": False, "error": f"Could not find file: {file_path}"}
+        
+        original, modified, summary = self.generate_edit(resolved_path, instruction, target)
         
         if original is None:
             return {"success": False, "error": summary}
         
-        diff = create_diff(original, modified, file_path)
+        diff = create_diff(original, modified, resolved_path)
         
         if not diff.strip():
             return {
                 "success": True,
-                "file_path": file_path,
+                "file_path": resolved_path,
                 "diff": "[No changes detected]",
                 "original": original,
                 "modified": modified,
@@ -188,7 +198,7 @@ Return the complete modified file:"""
         
         return {
             "success": True,
-            "file_path": file_path,
+            "file_path": resolved_path,
             "diff": diff,
             "original": original,
             "modified": modified,
