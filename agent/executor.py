@@ -17,6 +17,7 @@ class Executor:
         self.repo_path = repo_path
         self.edit_engine = EditEngine(repo_path)
         self._pending_edit = None  # Store pending edit for confirmation
+        self._edit_history = []  # stack of (file_path, original_content, instruction)
         
         self.tools = {
             "scan_repo": repo_scanner.scan_repo,
@@ -32,6 +33,7 @@ class Executor:
             # Edit tools
             "edit_file": self._edit_file_tool,
             "apply_edit": self._apply_edit_tool,
+            "undo": self.undo_last_edit,
         }
     
     def _github_clone_tool(self, repo_url: str, dest_path: str, timeout: int = 120) -> Dict[str, Any]:
@@ -109,6 +111,22 @@ class Executor:
         if not confirm:
             self._pending_edit = None
             return {"success": False, "message": "Edit cancelled by user"}
+            
+        # BEFORE applying, save to undo history
+        try:
+            abs_path = os.path.join(self.repo_path, self._pending_edit["file_path"])
+            original_content = ""
+            if os.path.exists(abs_path):
+                with open(abs_path, "r", encoding="utf-8") as f:
+                    original_content = f.read()
+            
+            self._edit_history.append({
+                "file_path": self._pending_edit["file_path"],
+                "original": original_content,
+                "instruction": self._pending_edit["instruction"]
+            })
+        except Exception as e:
+            print(f"[EXECUTOR] Warning: Could not save to undo history: {e}")
         
         result = self.edit_engine.apply_edit(
             self._pending_edit["file_path"],
@@ -119,6 +137,21 @@ class Executor:
         
         self._pending_edit = None
         return result
+        
+    def undo_last_edit(self) -> Dict[str, Any]:
+        """Undo the last file edit."""
+        if not self._edit_history:
+            return {"success": False, "message": "Nothing to undo"}
+        
+        entry = self._edit_history.pop()
+        abs_path = os.path.join(self.repo_path, entry["file_path"])
+        
+        try:
+            with open(abs_path, "w", encoding="utf-8") as f:
+                f.write(entry["original"])
+            return {"success": True, "message": f"↩️ Reverted {entry['file_path']}"}
+        except Exception as e:
+            return {"success": False, "message": f"Error during undo: {e}"}
     
     def has_pending_edit(self) -> bool:
         """Check if there's a pending edit awaiting confirmation."""

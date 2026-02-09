@@ -9,6 +9,7 @@ class QueryType(Enum):
     REASONING = "reasoning"        # Explain, refactor → LLM + retrieval
     TOOL_CALL = "tool_call"        # git_clone with URL → executor
     EDIT = "edit"                  # Edit/modify/fix code → edit engine
+    UNDO = "undo"                  # Revert last edit
 
 
 class QueryRouter:
@@ -22,6 +23,11 @@ class QueryRouter:
         """Classify query into one of the above types."""
         query_lower = query.lower()
         
+        # UNDO queries
+        undo_keywords = ["undo", "revert", "cancel last", "go back"]
+        if any(kw in query_lower for kw in undo_keywords):
+            return QueryType.UNDO
+            
         # EDIT queries - check first (highest priority for editing)
         edit_keywords = ["edit", "change", "modify", "update", "fix", "refactor", "add to", "remove from", "delete from", "replace", "rename"]
         if any(kw in query_lower for kw in edit_keywords):

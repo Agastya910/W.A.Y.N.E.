@@ -7,6 +7,7 @@ from llm.local_llm_client import LocalLLMClient
 from core.indexer_ import CodeIndexer
 from core.query_router import QueryRouter, QueryType
 from tools.github_helper import clone_github_repo, get_repo_url_from_query
+from agent.chat_history import ChatHistory
 
 
 class Planner:
@@ -21,6 +22,7 @@ class Planner:
         self.llm_client = LocalLLMClient()
         self.indexer = CodeIndexer(repo_path)
         self.router = QueryRouter()
+        self.history = ChatHistory(repo_path)
     
     def create_plan(self, user_query: str) -> List[Dict[str, Any]]:
         """
@@ -50,6 +52,10 @@ class Planner:
         # EDIT: Generate edit plan
         if query_type == QueryType.EDIT:
             return self._handle_edit_query(user_query)
+            
+        # UNDO: Revert last edit
+        if query_type == QueryType.UNDO:
+            return self._handle_undo_query(user_query)
         
         # TOOL: Direct execution
         if query_type == QueryType.TOOL_CALL:
@@ -159,9 +165,17 @@ class Planner:
             }
         }]
     
+    def _handle_undo_query(self, query: str) -> List[Dict[str, Any]]:
+        """Handle undo requests."""
+        print("[PLANNER] Planning undo operation...")
+        return [{
+            "tool_name": "undo",
+            "args": {}
+        }]
+
     def _retrieve_context(self, query: str) -> List[Dict[str, Any]]:
-        """Retrieve top-5 relevant code chunks."""
-        return self.indexer.search(query, k=5)
+        """Retrieve top-3 relevant code chunks (reduced from 5 to make room for history)."""
+        return self.indexer.search(query, k=3)
     
     def _plan_with_llm(
         self,
@@ -176,12 +190,16 @@ class Planner:
             for c in retrieved_context
         ])
         
+        history_context = self.history.get_context_block()
+        
         prompt = f"""
 You are a senior software engineer analyzing a codebase.
 
+{f"[Conversation history]{chr(10)}{history_context}" if history_context else ""}
+
 User Query: "{user_query}"
 
-Relevant Code Context (top 5 chunks):
+Relevant Code Context (top 3 chunks):
 {context_str if context_str else "[No relevant code found]"}
 
 Based on the query and context, answer the user's query, if not clear what the query says, provide a technical analysis. Be specific and reference file names.

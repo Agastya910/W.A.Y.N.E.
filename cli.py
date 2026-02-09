@@ -4,6 +4,7 @@ import sys
 from agent.planner import Planner
 from agent.executor import Executor
 from agent.verifier import Verifier
+from agent.chat_history import ChatHistory
 
 
 def print_result(res: dict, max_chars: int = None):
@@ -70,6 +71,7 @@ def main():
         planner = Planner(repo_path)
         executor = Executor(repo_path)
         verifier = Verifier()
+        history = ChatHistory(repo_path)
     except Exception as e:
         print(f"[ERROR] Failed to initialize agent: {e}")
         sys.exit(1)
@@ -120,7 +122,9 @@ def main():
             print(f"Status: {'✅ ACCEPT' if status == 'accept' else '⚠️  RETRY' if status == 'retry' else '❌ ABORT'}\n")
             
             # Check for pending edit and ask for confirmation
+            edit_info = None
             if executor.has_pending_edit():
+                edit_info = executor.get_pending_edit_info()
                 confirm = input("Apply this edit? [y/n]: ").strip().lower()
                 if confirm == 'y':
                     apply_result = executor._apply_edit_tool(confirm=True)
@@ -130,7 +134,12 @@ def main():
                         print(f"\n❌ {apply_result.get('message')}")
                 else:
                     executor._apply_edit_tool(confirm=False)
+                    edit_info = None # Don't log cancelled edits as "edited"
                     print("\n❌ Edit cancelled.")
+            
+            # Log turn to history
+            last_action = results[-1].get("tool", "unknown") if results else "none"
+            history.add_turn(query, last_action, edit_info)
             
         except KeyboardInterrupt:
             print("\n\nExiting...")
