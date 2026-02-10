@@ -119,7 +119,7 @@ python cli.py .
 
 The system follows a modular agentic loop:
 
-```mermaid
+```
 graph TD
     User[User Input] --> Router{Query Router}
 
