@@ -1,6 +1,7 @@
-# OPTIMIZATION GUIDE for RepoPilot
+# OPTIMIZATION GUIDE for WAYNE
 
 ## Current Performance
+
 - Embeddings: 30% GPU utilization (underutilized)
 - Response time: ~5 minutes for medium repos
 - Bottleneck: CPU-bound embedding and LLM inference
@@ -8,6 +9,7 @@
 ## Safe GPU Optimizations (Non-Breaking)
 
 ### 1. Force Ollama to Use GPU
+
 Already should be on GPU by default, but verify:
 
 ```bash
@@ -29,6 +31,7 @@ sudo nano /etc/systemd/system/ollama.service.d/override.conf
 ```
 
 Add:
+
 ```ini
 [Service]
 Environment="CUDA_VISIBLE_DEVICES=0"
@@ -36,6 +39,7 @@ Environment="OLLAMA_NUM_PARALLEL=4"
 ```
 
 Then:
+
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl start ollama
@@ -86,6 +90,7 @@ self.vector_store = FAISS.from_embeddings(
 
 Current: `nomic-embed-text` (good quality, slower)  
 Options:
+
 - `all-minilm` - 40x faster, 90% as good
 - `bge-small-en-v1.5` - 30x faster
 
@@ -121,6 +126,7 @@ The first embedding run takes time; subsequent runs load from disk instantly.
 Make sure users understand: **First indexing is slow, then instant.**
 
 Document in README:
+
 ```markdown
 ## Performance
 
@@ -128,6 +134,7 @@ Document in README:
 **Subsequent queries**: <30 seconds (embeddings cached)
 
 For large repos:
+
 - Go/React: ~3 min
 - Linux Kernel: ~15 min (92k files)
 ```
@@ -149,7 +156,7 @@ For large repos:
 ## Testing After Changes
 
 ```bash
-cd ~/RepoPilot
+cd ~/WAYNE
 rm -rf .repopilot_index ./analyzed_repo
 python cli.py .
 
@@ -168,6 +175,7 @@ results = i.search('authentication')
 ```
 
 Expected:
+
 - Before: 5 minutes
 - After (all-minilm): 2-3 minutes
 - With GPU properly configured: 1-2 minutes

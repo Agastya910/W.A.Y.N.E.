@@ -1,16 +1,18 @@
-# RepoPilot – Local AI Coding Agent
+# WAYNE
+
+Webless Autonomous Neural Engine
 
 **A customizable, offline-first alternative for AI-assisted coding.**
 
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/Agastya910/RepoPilot?style=social)](https://github.com/Agastya910/RepoPilot)
+[![GitHub stars](https://img.shields.io/github/stars/Agastya910/W.A.Y.N.E?style=social)](https://github.com/Agastya910/W.A.Y.N.E)
 
 ---
 
 ## Overview
 
-RepoPilot is an open-source AI agent system designed to navigate, understand, and edit codebases entirely on your local machine, and by local machine I do not mean a high end gaming pc or mac studio with 40 GB gpu vram, but your regular pc (having even an entry level GPU with 4GB vram would work wonders, but not necessary, also works on CPU. )
+W.A.Y.N.E. is an open-source AI agent system designed to navigate, understand, and edit codebases entirely on your local machine, and by local machine I do not mean a high end gaming pc or mac studio with 40 GB gpu vram, but your regular pc (having even an entry level GPU with 4GB vram would work wonders, but not necessary, also works on CPU. )
 
 Unlike cloud-based solutions, this runs on your hardware (via Ollama), ensuring that your code never leaves your device, and you own the models so can use them offline for free 24/7.
 
@@ -18,11 +20,21 @@ It is built to be "hackable"—allowing developers to modify the agent's logic, 
 
 It serves as a private, offline alternative to tools like GitHub Copilot, Cursor, or Gemini CLI, prioritizing data ownership and customizability.
 
+## Philosophy
+
+WAYNE operates under three core principles:
+
+1. **Webless** — No cloud dependency. Fully local.
+2. **Autonomous** — Agentic execution with structured reasoning.
+3. **Neural Engine** — Powered by local LLMs via Ollama.
+
+Privacy is not a feature. It is the foundation.
+
 ---
 
 ## ⚡ Core Technical Features
 
-RepoPilot implements several architectural patterns to enable effective local code intelligence:
+WAYNE implements several architectural patterns to enable effective local code intelligence:
 
 ### 1. Local RAG Pipeline
 
@@ -33,7 +45,7 @@ The retrieval system is optimized for code understanding:
 
 ### 2. 3-Layer Memory Architecture
 
-To manage limited context windows (typical of local models), RepoPilot uses a tiered memory system:
+To manage limited context windows (typical of local models), WAYNE uses a tiered memory system:
 
 - **System Context**: Persistent instructions and task state.
 - **Summary Layer**: Compressed history of past interactions.
@@ -42,7 +54,7 @@ To manage limited context windows (typical of local models), RepoPilot uses a ti
 
 ### 3. State-Managed Undo System
 
-RepoPilot maintains a deterministic undo stack for all file operations. Every edit is reversible via a simple "undo" command, providing a safety net for refactoring and experimentation.
+WAYNE maintains a deterministic undo stack for all file operations. Every edit is reversible via a simple "undo" command, providing a safety net for refactoring and experimentation.
 
 ### 4. Offline & Private
 
@@ -58,11 +70,11 @@ Designed for privacy-sensitive environments:
 
 ### CLI startup and local indexing
 
-![RepoPilot CLI startup](assets/cli-startup.jpg)
+![WAYNE CLI startup](assets/cli-startup.jpg)
 
 ### Cloning & analyzing a GitHub repo
 
-![RepoPilot analyzing Go repo](assets/cli-analysis.jpg)
+![WAYNE analyzing Go repo](assets/cli-analysis.jpg)
 
 ---
 
@@ -86,8 +98,8 @@ ollama pull qwen2.5:7b-instruct-q4_0
 ### 3. Setup
 
 ```bash
-git clone https://github.com/Agastya910/RepoPilot.git
-cd RepoPilot
+git clone https://github.com/Agastya910/W.A.Y.N.E.git
+cd W.A.Y.N.E.
 pip install -r requirements.txt
 ```
 
@@ -150,7 +162,7 @@ graph TD
 
 ## 🛠️ Development & Customization
 
-RepoPilot is designed to be modified. You can adjust the agent's prompts, add new tools, or swap out the retrieval logic to suit your needs.
+WAYNE is designed to be modified. You can adjust the agent's prompts, add new tools, or swap out the retrieval logic to suit your needs.
 
 ```bash
 # Run tests
@@ -163,6 +175,17 @@ black .
 ## 🤝 Contributing
 
 Contributions are welcome. Please submit a Pull Request.
+
+## FAQ
+
+**Q: Can I use WAYNE with any local model?**
+A: Yes, WAYNE supports any model compatible with Ollama, giving you the flexibility to choose models that fit your hardware and performance needs.
+
+**Q: Is my code really safe?**
+A: Absolutely. WAYNE runs entirely on your local machine. No code ever leaves your device or is sent to the cloud.
+
+**Q: What does the Y stand for?**
+A: It stands for **YOU**, as you have the full control over your stuff.
 
 ## 📄 License
 

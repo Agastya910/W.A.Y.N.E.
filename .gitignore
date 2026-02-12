@@ -12,3 +12,7 @@ analyzed_repo/
 https:/
 /tmp/
 .repopilot_indexes/
+.agent/
+.venv/
+RepoPilot Context History Design.md
+help_output.txt

@@ -46,7 +46,7 @@ def print_result(res: dict, max_chars: int = None):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="RepoPilot - Offline-First Codebase Intelligence Agent"
+        description="WAYNE - Webless Autonomous Neural Engine"
     )
     parser.add_argument("repo_path", help="Path to the repository to analyze.")
     args = parser.parse_args()
@@ -59,7 +59,7 @@ def main():
 
     print(f"""
 ╔══════════════════════════════════════════════════════╗
-║          🚀 RepoPilot - Local LLM Agent 🚀          ║
+║    W.A.Y.N.E. - Webless Autonomous Neural Engine     ║
 ║    Offline-first codebase intelligence system        ║
 ╚══════════════════════════════════════════════════════╝
     """)

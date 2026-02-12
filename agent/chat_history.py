@@ -5,7 +5,7 @@ from typing import List, Dict, Optional
 
 class ChatHistory:
     """
-    3-layer memory system for RepoPilot:
+    3-layer memory system for WAYNE:
     1. System context (Fixed)
     2. Summary (Compressed history of older turns)
     3. Sliding window (Last 2 raw turns)

@@ -77,7 +77,7 @@ class CodeIndexer:
     
     def __init__(self, repo_path: str, index_dir: str = ".repopilot_indexes"):
         self.repo_path = repo_path
-        # Store index in RepoPilot directory, with separate subdir per repo
+        # Store index in WAYNE directory, with separate subdir per repo
         script_dir = os.path.dirname(os.path.abspath(__file__))
         repo_pilot_dir = os.path.dirname(script_dir)
         # Create a unique subdir based on repo path
