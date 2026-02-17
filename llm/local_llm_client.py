@@ -2,15 +2,15 @@ import requests
 import json
 import time
 from typing import Optional
-
+from config import OLLAMA_MODEL
 class LocalLLMClient:
     """
     Client for local LLM inference via Ollama.
     Models: qwen2:7b-instruct-q4_0 (or similar)
     """
     
-    def __init__(self, model_name: str = "qwen2:7b-instruct-q4_0", base_url: str = "http://localhost:11434"):
-        self.model_name = model_name
+    def __init__(self, base_url: str = "http://localhost:11434"):
+        self.model_name = OLLAMA_MODEL
         self.base_url = base_url
         self.endpoint = f"{base_url}/api/generate"
     

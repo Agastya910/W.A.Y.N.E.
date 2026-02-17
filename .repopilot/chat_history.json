@@ -1,13 +1,13 @@
 {
-  "summary": "",
+  "summary": "User asked: 'where is llm streaming enabled on the codebase?' \u2192 llm_analysis\nUser asked: 'what is UniXcoder and how is it used in this project what is' \u2192 llm_analysis\nUser asked: 'where is llm streaming enabled in this?' \u2192 llm_analysis",
   "recent": [
     {
-      "user": "where is llm streaming enabled on the codebase?",
-      "action": "llm_analysis"
+      "user": "can you edit the temperature to 0.5 for the llm streaming?",
+      "action": "edit_file"
     },
     {
-      "user": "what is UniXcoder and how is it used in this project what is its purpose?",
-      "action": "llm_analysis"
+      "user": "edit to use glm-4.6:cloud instead of qwen2:7b-instruct-q4_0",
+      "action": "edit_file"
     }
   ],
   "edits_log": []
