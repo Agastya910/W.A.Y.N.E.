@@ -57,6 +57,14 @@ class Planner:
         if query_type == QueryType.UNDO:
             return self._handle_undo_query(user_query)
         
+        # FIX: Self-healing loop
+        if query_type == QueryType.FIX:
+            return self._handle_fix_query(user_query)
+
+        # INDEX_DOCS: Document ingestion
+        if query_type == QueryType.INDEX_DOCS:
+            return self._handle_index_docs_query(user_query)
+        
         # TOOL: Direct execution
         if query_type == QueryType.TOOL_CALL:
             return self._extract_tool_calls(user_query)
@@ -171,6 +179,41 @@ class Planner:
         return [{
             "tool_name": "undo",
             "args": {}
+        }]
+    
+    def _handle_fix_query(self, query: str) -> List[Dict[str, Any]]:
+        """Handle fix/self-heal queries."""
+        import re
+        file_pattern = r'[\w\-_/]+\.(?:py|js|ts|go|rs|java|cpp|c)'
+        file_matches = re.findall(file_pattern, query)
+        file_path = file_matches[0] if file_matches else None
+
+        if not file_path:
+            results = self.indexer.search(query, k=1)
+            if results:
+                file_path = results[0]['file_path']
+
+        if not file_path:
+            return [{
+                "tool_name": "report",
+                "args": {"message": "❌ Could not identify target file to fix. Please specify the filename."}
+            }]
+
+        print(f"[PLANNER] Fix target: {file_path}")
+        return [{"tool_name": "fix_file", "args": {"file_path": file_path}}]
+
+    def _handle_index_docs_query(self, query: str) -> List[Dict[str, Any]]:
+        """Handle document folder indexing requests."""
+        import re
+        # Try to extract a path from the query
+        path_match = re.search(r'["\']([^"\']+)["\']|(\S+/\S+|\S+\\\S+)', query)
+        folder = None
+        if path_match:
+            folder = path_match.group(1) or path_match.group(2)
+
+        return [{
+            "tool_name": "index_documents",
+            "args": {"folder_path": folder or "."}
         }]
 
     def _retrieve_context(self, query: str) -> List[Dict[str, Any]]:

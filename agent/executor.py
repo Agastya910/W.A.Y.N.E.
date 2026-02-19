@@ -1,11 +1,14 @@
 from typing import List, Dict, Any
 import json
 import os
+import subprocess
 
 from tools import repo_scanner, code_search, file_io, diff_writer
 from tools.github_helper import clone_github_repo
 from core.indexer_ import CodeIndexer
 from agent.edit_engine import EditEngine
+from llm.local_llm_client import LocalLLMClient
+from core.ingestion import IngestionPipeline
 
 
 class Executor:
@@ -34,6 +37,8 @@ class Executor:
             "edit_file": self._edit_file_tool,
             "apply_edit": self._apply_edit_tool,
             "undo": self.undo_last_edit,
+            "fix_file": self._fix_file_tool,
+            "index_documents": self._index_documents_tool,
         }
     
     def _github_clone_tool(self, repo_url: str, dest_path: str, timeout: int = 120) -> Dict[str, Any]:
@@ -153,6 +158,103 @@ class Executor:
         except Exception as e:
             return {"success": False, "message": f"Error during undo: {e}"}
     
+    def _fix_file_tool(self, file_path: str, max_cycles: int = 5) -> Dict[str, Any]:
+        """
+        Self-healing loop: run a Python file, detect errors, auto-fix, repeat.
+        Uses the LLM with JSON-mode output for structured patch generation.
+        Integrates with the existing undo stack.
+        """
+        llm = LocalLLMClient()
+        abs_path = os.path.join(self.repo_path, file_path)
+
+        if not os.path.exists(abs_path):
+            return {"success": False, "message": f"File not found: {file_path}"}
+
+        print(f"\n[FIX] Starting self-healing loop for: {file_path}")
+
+        for cycle in range(max_cycles):
+            print(f"\n[FIX] Cycle {cycle + 1}/{max_cycles}")
+
+            # Run the file
+            try:
+                result = subprocess.run(
+                    ["python", abs_path],
+                    capture_output=True, text=True, timeout=10
+                )
+            except subprocess.TimeoutExpired:
+                return {"success": False, "message": "Execution timed out after 10s"}
+
+            if result.returncode == 0:
+                print(f"[FIX] ✅ File runs successfully after {cycle} fix(es).")
+                return {
+                    "success": True,
+                    "message": f"✅ {file_path} runs successfully after {cycle} fix(es).",
+                    "cycles": cycle
+                }
+
+            error_output = result.stderr.strip()
+            print(f"[FIX] Error detected: {error_output[:120]}")
+
+            # Read current file content
+            try:
+                with open(abs_path, "r", encoding="utf-8") as f:
+                    current_code = f.read()
+            except Exception as e:
+                return {"success": False, "message": f"Cannot read file: {e}"}
+
+            # Save to undo stack before applying any fix
+            self._edit_history.append({
+                "file_path": file_path,
+                "original": current_code,
+                "instruction": f"auto-fix cycle {cycle + 1}"
+            })
+
+            # Ask LLM for fix (JSON mode for reliable parsing)
+            prompt_messages = [
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a Python debugging assistant. "
+                        "You will receive a broken Python file and its error. "
+                        "Return ONLY valid JSON with a single key 'fixed_code' "
+                        "containing the complete corrected file as a string."
+                    )
+                },
+                {
+                    "role": "user",
+                    "content": (
+                        f"FILE: {file_path}\n\n"
+                        f"ERROR:\n{error_output}\n\n"
+                        f"CODE:\n{current_code}"
+                    )
+                }
+            ]
+
+            raw = llm.chat(prompt_messages, temperature=0.2, json_mode=True)
+
+            try:
+                import json
+                parsed = json.loads(raw)
+                fixed_code = parsed.get("fixed_code", "").strip()
+                if not fixed_code:
+                    raise ValueError("Empty fixed_code in response")
+            except Exception as e:
+                print(f"[FIX] ⚠️ Could not parse LLM response: {e}")
+                continue
+
+            # Write the fix
+            try:
+                with open(abs_path, "w", encoding="utf-8") as f:
+                    f.write(fixed_code)
+                print(f"[FIX] Patch applied (cycle {cycle + 1})")
+            except Exception as e:
+                return {"success": False, "message": f"Could not write fix: {e}"}
+
+        return {
+            "success": False,
+            "message": f"❌ Could not fix {file_path} after {max_cycles} cycles. Use 'undo' to revert."
+        }
+    
     def has_pending_edit(self) -> bool:
         """Check if there's a pending edit awaiting confirmation."""
         return self._pending_edit is not None
@@ -188,3 +290,69 @@ class Executor:
                 })
         
         return results
+
+    def _index_documents_tool(self, folder_path: str) -> str:
+        """
+        Index all supported documents (PDF, DOCX, PPTX, TXT) in a folder
+        into WAYNE's Qdrant vector store.
+        """
+        import os
+        import uuid
+        from qdrant_client.models import PointStruct
+        from core.indexer_ import CodeIndexer
+        from config import QDRANT_COLLECTION, SPARSE_VECTOR_NAME
+        import ollama as ollama_lib
+
+        abs_folder = os.path.abspath(folder_path)
+        if not os.path.exists(abs_folder):
+            return f"❌ Folder not found: {abs_folder}"
+
+        ingestion = IngestionPipeline()
+        indexer = CodeIndexer(self.repo_path)  # reuse existing qdrant client
+
+        supported_exts = {".pdf", ".docx", ".pptx", ".txt"}
+        files = [
+            f for f in os.listdir(abs_folder)
+            if os.path.splitext(f)[1].lower() in supported_exts
+        ]
+
+        if not files:
+            return f"⚠️ No supported documents found in {abs_folder}"
+
+        total_chunks = 0
+        for file in files:
+            file_path = os.path.join(abs_folder, file)
+
+            # Skip already-indexed files
+            if indexer._file_exists_in_db(file_path):
+                print(f"[INDEX_DOCS] ⏩ Skipping {file} (already indexed)")
+                continue
+
+            chunks = ingestion.process_file(file_path)
+            if not chunks:
+                continue
+
+            # Embed and upsert into the same Qdrant collection as code
+            ollama_client = ollama_lib.Client()
+            points = []
+            for chunk in chunks:
+                dense = ollama_client.embeddings(
+                    model="nomic-embed-text", prompt=chunk["content"]
+                )["embedding"]
+                from qdrant_client.models import models
+                points.append(PointStruct(
+                    id=str(uuid.uuid4()),
+                    vector={
+                        "dense": dense,
+                        SPARSE_VECTOR_NAME: models.Document(
+                            text=chunk["content"], model="Qdrant/bm25"
+                        )
+                    },
+                    payload=chunk
+                ))
+
+            if points:
+                indexer.qdrant.upsert(collection_name=QDRANT_COLLECTION, points=points)
+                total_chunks += len(points)
+
+        return f"✅ Indexed {total_chunks} chunks from {len(files)} document(s) in {abs_folder}"

@@ -1,74 +1,59 @@
-import requests
-import json
-import time
-from typing import Optional
+import ollama
 from config import OLLAMA_MODEL
+
+
 class LocalLLMClient:
     """
     Client for local LLM inference via Ollama.
-    Models: qwen2:7b-instruct-q4_0 (or similar)
+    Uses the official ollama Python library.
     """
-    
-    def __init__(self, base_url: str = "http://localhost:11434"):
+
+    def __init__(self):
         self.model_name = OLLAMA_MODEL
-        self.base_url = base_url
-        self.endpoint = f"{base_url}/api/generate"
-    
+        self.client = ollama.Client()
+
     def generate_text(self, prompt: str, max_tokens: int = 1024, temperature: float = 0.7) -> str:
-        """
-        Generate text using local model.
-        """
-        payload = {
-            "model": self.model_name,
-            "prompt": prompt,
-            "stream": False,
-            "temperature": temperature,
-        }
-        
+        """Generate text using local model. Returns full response string."""
         try:
-            response = requests.post(self.endpoint, json=payload, timeout=300)
-            response.raise_for_status()
-            result = response.json()
-            return result.get("response", "").strip()
-        except requests.exceptions.ConnectionError:
-            return f"[ERROR] Could not connect to Ollama at {self.base_url}. Is it running? (ollama serve)"
+            response = self.client.generate(
+                model=self.model_name,
+                prompt=prompt,
+                options={"temperature": temperature, "num_predict": max_tokens}
+            )
+            return response["response"].strip()
         except Exception as e:
             return f"[ERROR] LLM inference failed: {str(e)}"
-    
+
     def generate_text_stream(self, prompt: str, max_tokens: int = 1024, temperature: float = 0.7):
-        """
-        Generate text using local model with streaming.
-        Yields chunks of text as they arrive.
-        """
-        payload = {
-            "model": self.model_name,
-            "prompt": prompt,
-            "stream": True,
-            "temperature": temperature,
-        }
-        
+        """Generate text with streaming. Yields text chunks."""
         try:
-            response = requests.post(self.endpoint, json=payload, timeout=300, stream=True)
-            response.raise_for_status()
-            
-            full_response = ""
-            for line in response.iter_lines():
-                if line:
-                    chunk = json.loads(line.decode('utf-8'))
-                    token = chunk.get("response", "")
-                    if token:
-                        full_response += token
-                        yield token
-                    if chunk.get("done", False):
-                        break
-                        
-        except requests.exceptions.ConnectionError:
-            yield f"[ERROR] Could not connect to Ollama at {self.base_url}. Is it running? (ollama serve)"
+            stream = self.client.generate(
+                model=self.model_name,
+                prompt=prompt,
+                stream=True,
+                options={"temperature": temperature, "num_predict": max_tokens}
+            )
+            for chunk in stream:
+                token = chunk.get("response", "")
+                if token:
+                    yield token
         except Exception as e:
             yield f"[ERROR] LLM inference failed: {str(e)}"
 
-
-if __name__ == "__main__":
-    client = LocalLLMClient()
-    response = client.generate_text("What is the meaning of life?")
-    print(response)
+    def chat(self, messages: list, temperature: float = 0.7, json_mode: bool = False) -> str:
+        """
+        Chat-style generation. Optionally enforces JSON output.
+        messages: list of {"role": "...", "content": "..."} dicts
+        """
+        try:
+            kwargs = {
+                "model": self.model_name,
+                "messages": messages,
+                "options": {"temperature": temperature}
+            }
+            if json_mode:
+                kwargs["format"] = "json"
+            response = self.client.chat(**kwargs)
+            return response["message"]["content"].strip()
+        except Exception as e:
+            return f"[ERROR] Chat inference failed: {str(e)}"

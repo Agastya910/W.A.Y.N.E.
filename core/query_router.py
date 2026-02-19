@@ -10,6 +10,8 @@ class QueryType(Enum):
     TOOL_CALL = "tool_call"        # git_clone with URL → executor
     EDIT = "edit"                  # Edit/modify/fix code → edit engine
     UNDO = "undo"                  # Revert last edit
+    FIX = "fix"
+    INDEX_DOCS = "index_docs"
 
 
 class QueryRouter:
@@ -33,6 +35,16 @@ class QueryRouter:
         if any(kw in query_lower for kw in edit_keywords):
             return QueryType.EDIT
         
+        # FIX queries
+        fix_keywords = ["fix", "heal", "auto-fix", "self-heal", "debug and fix", "fix errors in"]
+        if any(kw in query_lower for kw in fix_keywords):
+            return QueryType.FIX
+
+        # INDEX_DOCS queries
+        index_keywords = ["index documents", "index folder", "index files", "add documents", "scan folder"]
+        if any(kw in query_lower for kw in index_keywords):
+            return QueryType.INDEX_DOCS
+
         # METADATA queries
         metadata_keywords = ["how many", "list", "count", "what files", "structure", "hierarchy", "number of files"]
         if any(kw in query_lower for kw in metadata_keywords):

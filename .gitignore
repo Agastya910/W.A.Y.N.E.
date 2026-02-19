@@ -16,3 +16,4 @@ https:/
 .venv/
 RepoPilot Context History Design.md
 help_output.txt
+qdrant_storage/

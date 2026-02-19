@@ -34,35 +34,30 @@ Privacy is not a feature. It is the foundation.
 
 ## ⚡ Core Technical Features
 
-WAYNE implements several architectural patterns to enable effective local code intelligence:
+### 1. Hybrid RAG Pipeline
+Retrieval combines semantic (dense) and keyword (sparse/BM25) vectors using
+Reciprocal Rank Fusion, then reranks the top candidates with FlashRank
+(a 30MB ONNX model that runs fast on CPU). This means both "explain the
+authentication flow" and "find all calls to parse_token" work reliably.
 
-### 1. Local RAG Pipeline
+### 2. Code + Document Intelligence
+WAYNE indexes your codebase automatically. You can also run `index documents`
+to ingest PDFs, Word documents, or plain text files into the same search index.
+Ask questions across everything — your code, your docs, your notes.
 
-The retrieval system is optimized for code understanding:
+### 3. 3-Layer Memory Architecture
+System context, compressed history, and a sliding window of recent turns.
+Lets you have extended conversations without losing context, even on models
+with small context windows.
 
-- **AST-Aware Chunking**: Parses code structure to keep functions and classes intact.
-- **Re-ranking**: Filters irrelevant context using a cross-encoder to maximize the utility of the LLM's context window.
+### 4. State-Managed Undo + Self-Healing
+Every file edit is reversible with "undo". The `fix` command runs your
+Python file, captures errors, asks the LLM to patch them with structured
+JSON output, and retries — up to 5 cycles. Every auto-fix is also undoable.
 
-### 2. 3-Layer Memory Architecture
-
-To manage limited context windows (typical of local models), WAYNE uses a tiered memory system:
-
-- **System Context**: Persistent instructions and task state.
-- **Summary Layer**: Compressed history of past interactions.
-- **Sliding Window**: Raw transcript of recent turns for precise follow-up questions.
-  This allows for extended conversations without losing context.
-
-### 3. State-Managed Undo System
-
-WAYNE maintains a deterministic undo stack for all file operations. Every edit is reversible via a simple "undo" command, providing a safety net for refactoring and experimentation.
-
-### 4. Offline & Private
-
-Designed for privacy-sensitive environments:
-
-- **No External API Calls**: Runs on Ollama (`localhost:11434`).
-- **Air-Gapped Capable**: Fully functional without an internet connection once models are downloaded.
-- **Data Sovereignty**: Your codebase and chat history remain on your local disk.
+### 5. Fully Offline
+Runs on Ollama (localhost). Works on CPU-only machines or entry-level GPUs
+(4GB VRAM). No code ever leaves your device.
 
 ---
 
@@ -80,23 +75,23 @@ Designed for privacy-sensitive environments:
 
 ## 🚀 Quick Start
 
-### 1. Install Prerequisites
+### Prerequisites
+- Python 3.9+
+- [Ollama](https://ollama.ai) — install and run locally
+- Docker Desktop — for the Qdrant vector database
 
-- **Python 3.9+**
-- **Ollama** – download from [ollama.ai](https://ollama.ai)
-
-### 2. Install Models
-
+### 1. Pull models
 ```bash
-# Embedding model
 ollama pull nomic-embed-text
-
-# Reasoning model (Example: Qwen 2.5 7B)
 ollama pull qwen2.5:7b-instruct-q4_0
 ```
 
-### 3. Setup
+### 2. Start the vector database
+```bash
+docker-compose up -d
+```
 
+### 3. Clone and install
 ```bash
 git clone https://github.com/Agastya910/W.A.Y.N.E.git
 cd W.A.Y.N.E.
@@ -104,10 +99,16 @@ pip install -r requirements.txt
 ```
 
 ### 4. Run
-
 ```bash
 python cli.py .
 ```
+
+### Example commands once running
+- "Explain the authentication flow in auth.py"
+- "Edit utils.py — replace deprecated_fn with new_fn"
+- "Undo"
+- "Fix app.py" — self-healing loop
+- "Index documents" — ingest a folder of PDFs/docs
 
 ---
 

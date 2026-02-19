@@ -3,19 +3,17 @@ import os
 import requests
 from typing import List, Dict, Any
 from .repo_scanner import scan_repo
-from config import GITHUB_TOKEN
 
 def search_github(repo_url: str, query: str) -> List[Dict[str, Any]]:
-    """Searches a remote repo using GitHub Search API with authentication."""
+    """Searches a remote repo using GitHub Search API."""
     parts = repo_url.replace("https://github.com/", "").split("/")
     if len(parts) < 2: return []
     owner, repo = parts[0], parts[1]
     
-    # Auth headers are critical for the Search API
+    # Auth headers are optional but recommended
     headers = {
-        "Authorization": f"token {GITHUB_TOKEN}",
         "Accept": "application/vnd.github.v3+json"
-    } if GITHUB_TOKEN else {}
+    }
     
     # GitHub Search API 
     api_url = f"https://api.github.com/search/code?q={query}+repo:{owner}/{repo}"
