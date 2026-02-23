@@ -300,7 +300,7 @@ class Executor:
         import uuid
         from qdrant_client.models import PointStruct
         from core.indexer_ import CodeIndexer
-        from config import QDRANT_COLLECTION, SPARSE_VECTOR_NAME
+        from config import SPARSE_VECTOR_NAME
         import ollama as ollama_lib
 
         abs_folder = os.path.abspath(folder_path)
@@ -352,7 +352,7 @@ class Executor:
                 ))
 
             if points:
-                indexer.qdrant.upsert(collection_name=QDRANT_COLLECTION, points=points)
+                indexer.qdrant.upsert(collection_name=indexer.collection, points=points)
                 total_chunks += len(points)
 
         return f"✅ Indexed {total_chunks} chunks from {len(files)} document(s) in {abs_folder}"

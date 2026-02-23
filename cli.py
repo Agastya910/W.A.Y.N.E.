@@ -1,3 +1,12 @@
+import logging
+
+# Suppress httpx and httpcore logs completely
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+# Disable propagation to root logger
+logging.getLogger("httpx").propagate = False
+logging.getLogger("httpcore").propagate = False
+
 import argparse
 import os
 import sys
@@ -5,6 +14,7 @@ from agent.planner import Planner
 from agent.executor import Executor
 from agent.verifier import Verifier
 from agent.chat_history import ChatHistory
+from core.repo_registry import get_repo_metadata
 
 
 def print_result(res: dict, max_chars: int = None):
@@ -64,6 +74,8 @@ def main():
 ╚══════════════════════════════════════════════════════╝
     """)
     print(f"Repository: {repo_path}")
+    repo_meta = get_repo_metadata(repo_path)
+    print(f"Repo ID: {repo_meta['repo_id']} | Collection: {repo_meta['collection_name']}")
     print("Building semantic index...\n")
     
     # Initialize agents

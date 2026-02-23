@@ -10,7 +10,7 @@ OLLAMA_EMBED_MODEL = os.getenv("OLLAMA_EMBED_MODEL", "nomic-embed-text")
 
 # Qdrant Configuration
 QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
-QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "wayne_index")
+QDRANT_COLLECTION_PREFIX = "wayne"  # Per-repo collections: wayne_{name}_{hash}
 SPARSE_VECTOR_NAME = "sparse-text"
 
 # Retrieval Configuration

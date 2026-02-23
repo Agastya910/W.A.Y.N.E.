@@ -12,9 +12,10 @@ from qdrant_client.models import PointStruct, VectorParams, Distance, SparseVect
 import uuid
 
 from config import (
-    QDRANT_URL, QDRANT_COLLECTION, SPARSE_VECTOR_NAME,
+    QDRANT_URL, SPARSE_VECTOR_NAME,
     OLLAMA_EMBED_MODEL, TOP_K_RETRIEVAL, TOP_K_RERANK
 )
+from core.repo_registry import get_collection_name
 from tools.repo_scanner import scan_repo
 from tools.file_io import read_file
 from core.reranking import Reranker
@@ -58,7 +59,7 @@ class CodeIndexer:
         self.ollama = ollama_lib.Client()
         self.qdrant = QdrantClient(url=QDRANT_URL, timeout=60)
         self.reranker = Reranker()
-        self.collection = QDRANT_COLLECTION
+        self.collection = get_collection_name(repo_path)
         self._ensure_collection()
         self._files_cache: List[Dict] = []
         self.load_or_build_index()
@@ -98,10 +99,10 @@ class CodeIndexer:
     def load_or_build_index(self):
         count = self.qdrant.count(self.collection).count
         if count > 0:
-            print(f"[INDEXER] ✅ Loaded existing index: {count} vectors in Qdrant")
+            print(f"[INDEXER] ✅ Loaded existing index: {count} vectors in collection '{self.collection}'")
             self._build_files_cache()
         else:
-            print("[INDEXER] Building new index...")
+            print(f"[INDEXER] Building new index in collection '{self.collection}'...")
             self.build_index()
 
     def build_index(self):
